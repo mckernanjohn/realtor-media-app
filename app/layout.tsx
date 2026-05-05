@@ -21,11 +21,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Grey Collective — Realtor Media",
-    template: "%s · Grey Collective Media",
+    default: "Grey Collective — Media Intake",
+    template: "%s · Grey Collective Media Intake",
   },
   description:
-    "Phase 1 mock workflow: submit media, admin checklist review, publish to public gallery.",
+    "Controlled intake, review, and publishing for broker media, construction progress, milestones, and marketing assets (Phase 2 mock).",
 };
 
 export default function RootLayout({

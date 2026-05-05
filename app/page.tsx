@@ -6,9 +6,9 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-14 px-4 py-14 sm:px-6 sm:py-20">
       <PageHero
-        title="Realtor media command center"
-        subtitle="Phase 1 exercises the full intake-to-publish path in a controlled mock environment: structured submissions with attached media, admin review, and a public gallery that only ever shows Published work."
-        summary="No live storage, authentication, or external integrations in this build — workflow fidelity first, infrastructure next."
+        title="Media intake command center"
+        subtitle="A controlled intake, review, and publishing system for broker media, construction progress, project milestones, and marketing assets — mock/local only, premium Grey Collective standards."
+        summary="No live storage or auth in this build. The public gallery only shows work that is Published and explicitly routed to the Public Media Gallery."
       />
 
       <ul className="grid gap-5 sm:grid-cols-3">
@@ -33,7 +33,7 @@ export default function Home() {
           >
             <span className="text-sm font-semibold text-stone-900 dark:text-stone-50">Admin</span>
             <span className="mt-3 block text-xs font-normal leading-relaxed text-stone-600 dark:text-stone-400">
-              Queue, checklist, internal notes, and explicit publish control.
+              Destinations, review checklists, flags, and explicit publish control.
             </span>
             <span className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-stone-500 group-hover:text-stone-800 dark:text-stone-500 dark:group-hover:text-stone-300">
               Review queue →
@@ -47,7 +47,7 @@ export default function Home() {
           >
             <span className="text-sm font-semibold text-stone-900 dark:text-stone-50">Public media</span>
             <span className="mt-3 block text-xs font-normal leading-relaxed text-stone-600 dark:text-stone-400">
-              Client-safe gallery: Published listings only, editorial captions.
+              Public Media Gallery only — marketing-safe, destination-cleared work.
             </span>
             <span className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-stone-500 group-hover:text-stone-800 dark:text-stone-500 dark:group-hover:text-stone-300">
               View gallery →
@@ -62,8 +62,8 @@ export default function Home() {
             Operational workflow
           </h2>
           <p className="max-w-2xl text-sm text-stone-600 dark:text-stone-400">
-            From intake to public gallery, each step is deliberate — nothing surfaces on /media until publishing
-            is explicit.
+            From field intake to routed publishing: construction progress stays internal by default until staff assign
+            Public Media Gallery and publish.
           </p>
         </div>
         <ol className="mt-6 space-y-4 text-sm leading-relaxed text-stone-800 dark:text-stone-200">
@@ -90,9 +90,9 @@ export default function Home() {
               3
             </span>
             <span>
-              Prefer <span className="font-semibold">Ready to Publish</span> for public prep, then{" "}
-              <span className="font-semibold">Publish</span> — the only path to the public gallery (or publish from
-              Approved with a complete checklist, validated on the server).
+              Prefer <span className="font-semibold">Ready to Publish</span>, then{" "}
+              <span className="font-semibold">Publish</span>. The public gallery requires both Published status and
+              destination <span className="font-semibold">Public Media Gallery</span> (other destinations stay off /media).
             </span>
           </li>
         </ol>

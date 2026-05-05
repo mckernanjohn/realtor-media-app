@@ -12,7 +12,15 @@ import { useMemo, useState, useTransition } from "react";
 
 import { submitIntakeAction } from "@/app/actions/media";
 import { validateMockFileSelection, type MockValidationResult } from "@/lib/media/mock-validation";
-import { INTENDED_USE_OPTIONS, MEDIA_TYPE_OPTIONS, PROJECT_OPTIONS } from "@/lib/media/types";
+import {
+  INTENDED_USE_OPTIONS,
+  MEDIA_TYPE_OPTIONS,
+  PROJECT_OPTIONS,
+  PROPERTY_AREA_OPTIONS,
+  PROJECT_PHASE_OPTIONS,
+  SUBMISSION_CATEGORY_OPTIONS,
+  SUBMITTER_TYPE_OPTIONS,
+} from "@/lib/media/types";
 
 function initialsPreview(name: string) {
   const base = name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, " ").trim();
@@ -84,7 +92,7 @@ export function SubmitMediaForm() {
     >
       <section className={sectionShell}>
         <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
-          <h2 className={sectionTitle}>Contact & brokerage</h2>
+          <h2 className={sectionTitle}>Contact & team</h2>
           <p className={sectionHint}>
             Mock intake — nothing is persisted beyond this server session. Later phases add secure storage and
             identity.
@@ -106,8 +114,69 @@ export function SubmitMediaForm() {
             />
           </label>
           <label className="block space-y-2 sm:col-span-2">
-            <span className={labelClass}>Brokerage / company</span>
-            <input name="brokerageCompany" required className={fieldClass} placeholder="Brokerage name" />
+            <span className={labelClass}>Company / team</span>
+            <input name="companyTeam" required className={fieldClass} placeholder="Brokerage, GC, studio, or internal team" />
+          </label>
+          <label className="block space-y-2 sm:col-span-2">
+            <span className={labelClass}>Submitter type</span>
+            <select name="submitterType" required className={fieldClass}>
+              {SUBMITTER_TYPE_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className={sectionShell}>
+        <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
+          <h2 className={sectionTitle}>Submission context</h2>
+          <p className={sectionHint}>
+            Brokers can submit listing or marketing media. Superintendents and project staff can submit construction
+            progress — it defaults to internal review. Nothing becomes public until an admin publishes to the Public
+            Media Gallery.
+          </p>
+        </header>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className="block space-y-2 sm:col-span-2">
+            <span className={labelClass}>Submission category</span>
+            <select name="submissionCategory" required className={fieldClass}>
+              {SUBMISSION_CATEGORY_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className={labelClass}>Project phase</span>
+            <select name="projectPhase" required className={fieldClass}>
+              {PROJECT_PHASE_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className={labelClass}>Property area</span>
+            <select name="propertyArea" required className={fieldClass}>
+              {PROPERTY_AREA_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-2 sm:col-span-2">
+            <span className={labelClass}>Progress date</span>
+            <input
+              name="progressDate"
+              className={fieldClass}
+              placeholder="e.g. 2026-05-01 or as-of label"
+            />
           </label>
         </div>
       </section>
@@ -115,7 +184,9 @@ export function SubmitMediaForm() {
       <section className={sectionShell}>
         <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
           <h2 className={sectionTitle}>Property</h2>
-          <p className={sectionHint}>Marketing context for the listing or development assignment.</p>
+          <p className={sectionHint}>
+            Listing, development, or jobsite context — Arizona luxury residential focus.
+          </p>
         </header>
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block space-y-2 sm:col-span-2">
@@ -157,8 +228,7 @@ export function SubmitMediaForm() {
         <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
           <h2 className={sectionTitle}>Media details</h2>
           <p className={sectionHint}>
-            Phase 1 captures one media row per submission; the model is ready for multiple assets later without
-            rework.
+            One media row per submission in this mock; the structure supports more assets later without rework.
           </p>
         </header>
         <div className="grid gap-5">
@@ -275,8 +345,8 @@ export function SubmitMediaForm() {
           {pending ? "Submitting…" : "Submit for Grey Collective review"}
         </button>
         <p className="max-w-md text-xs leading-relaxed text-stone-500 dark:text-stone-500">
-          Publishing is admin-only after checklist review and an explicit publish action — never automatic from
-          approval alone.
+          Staff set publishing destination; the public gallery only shows work explicitly routed to the Public Media
+          Gallery after publish.
         </p>
       </div>
     </form>

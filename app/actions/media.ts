@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Server mutations for Phase 1 mock workflow.
+ * Server mutations for Phase 2 mock workflow.
  * FUTURE: swap to Supabase RPC / edge functions + Storage webhooks; enforce admin auth here.
  */
 
@@ -16,18 +16,34 @@ import {
 import { canonicalMimeForIntake, isMimeAllowedForMockUpload } from "@/lib/media/mock-validation";
 import type {
   AdminReviewChecklist,
+  AdminReviewFlags,
   IntendedUseOption,
   MediaItem,
   MediaTypeOption,
   ProjectAssignment,
+  PublishingDestination,
+  PropertyArea,
+  ProjectPhase,
   Submission,
+  SubmissionCategory,
+  SubmitterType,
   WorkflowStatus,
 } from "@/lib/media/types";
 import {
+  CONSTRUCTION_CHECKLIST_KEYS,
   INTENDED_USE_OPTIONS,
+  isChecklistComplete,
   MEDIA_TYPE_OPTIONS,
+  needsConstructionReviewChecklist,
   PROJECT_OPTIONS,
-  REVIEW_CHECKLIST_KEYS,
+  PROPERTY_AREA_OPTIONS,
+  PROJECT_PHASE_OPTIONS,
+  PUBLISHING_DESTINATION_OPTIONS,
+  REVIEW_FLAG_KEYS,
+  SUBMISSION_CATEGORY_OPTIONS,
+  SUBMITTER_TYPE_OPTIONS,
+  UNIVERSAL_CHECKLIST_KEYS,
+  emptyAdminReviewFlags,
 } from "@/lib/media/types";
 
 function str(fd: FormData, key: string) {
@@ -52,16 +68,55 @@ function assertMediaType(v: string): v is MediaTypeOption {
   return (MEDIA_TYPE_OPTIONS as readonly string[]).includes(v);
 }
 
-function parseChecklist(fd: FormData): AdminReviewChecklist {
-  const o = {} as AdminReviewChecklist;
-  for (const key of REVIEW_CHECKLIST_KEYS) {
-    o[key] = fd.get(`chk_${key}`) === "on";
+function assertSubmitterType(v: string): v is SubmitterType {
+  return (SUBMITTER_TYPE_OPTIONS as readonly string[]).includes(v);
+}
+
+function assertSubmissionCategory(v: string): v is SubmissionCategory {
+  return (SUBMISSION_CATEGORY_OPTIONS as readonly string[]).includes(v);
+}
+
+function assertProjectPhase(v: string): v is ProjectPhase {
+  return (PROJECT_PHASE_OPTIONS as readonly string[]).includes(v);
+}
+
+function assertPropertyArea(v: string): v is PropertyArea {
+  return (PROPERTY_AREA_OPTIONS as readonly string[]).includes(v);
+}
+
+function assertPublishingDestination(v: string): v is PublishingDestination {
+  return (PUBLISHING_DESTINATION_OPTIONS as readonly string[]).includes(v);
+}
+
+function parseUniversalChecklist(fd: FormData) {
+  const o = {} as AdminReviewChecklist["universal"];
+  for (const key of UNIVERSAL_CHECKLIST_KEYS) {
+    o[key] = fd.get(`chk_u_${key}`) === "on";
   }
   return o;
 }
 
-function checklistComplete(c: AdminReviewChecklist) {
-  return REVIEW_CHECKLIST_KEYS.every((k) => c[k] === true);
+function parseConstructionChecklist(fd: FormData) {
+  const o = {} as AdminReviewChecklist["construction"];
+  for (const key of CONSTRUCTION_CHECKLIST_KEYS) {
+    o[key] = fd.get(`chk_c_${key}`) === "on";
+  }
+  return o;
+}
+
+function parseAdminReviewChecklist(fd: FormData): AdminReviewChecklist {
+  return {
+    universal: parseUniversalChecklist(fd),
+    construction: parseConstructionChecklist(fd),
+  };
+}
+
+function parseReviewFlags(fd: FormData): AdminReviewFlags {
+  const o = {} as AdminReviewFlags;
+  for (const key of REVIEW_FLAG_KEYS) {
+    o[key] = fd.get(`flag_${key}`) === "on";
+  }
+  return o;
 }
 
 function syncAllMediaStatus(sub: Submission, status: WorkflowStatus): MediaItem[] {
@@ -91,7 +146,12 @@ function patchMedia(sub: Submission, mediaId: string, patch: Partial<MediaItem>)
 export async function submitIntakeAction(fd: FormData): Promise<ActionResult> {
   const submitterName = str(fd, "submitterName");
   const submitterEmail = str(fd, "submitterEmail");
-  const brokerageCompany = str(fd, "brokerageCompany");
+  const companyTeam = str(fd, "companyTeam");
+  const submitterType = str(fd, "submitterType");
+  const submissionCategory = str(fd, "submissionCategory");
+  const projectPhase = str(fd, "projectPhase");
+  const propertyArea = str(fd, "propertyArea");
+  const progressDate = str(fd, "progressDate");
   const propertyName = str(fd, "propertyName");
   const propertyAddress = str(fd, "propertyAddress");
   const location = str(fd, "location");
@@ -111,7 +171,11 @@ export async function submitIntakeAction(fd: FormData): Promise<ActionResult> {
   if (!submitterEmail || !submitterEmail.includes("@")) {
     return { ok: false, error: "A valid submitter email is required." };
   }
-  if (!brokerageCompany) return { ok: false, error: "Brokerage / company is required." };
+  if (!companyTeam) return { ok: false, error: "Company / team is required." };
+  if (!assertSubmitterType(submitterType)) return { ok: false, error: "Invalid submitter type." };
+  if (!assertSubmissionCategory(submissionCategory)) return { ok: false, error: "Invalid submission category." };
+  if (!assertProjectPhase(projectPhase)) return { ok: false, error: "Invalid project phase." };
+  if (!assertPropertyArea(propertyArea)) return { ok: false, error: "Invalid property area." };
   if (!propertyName) return { ok: false, error: "Property name is required." };
   if (!propertyAddress) return { ok: false, error: "Property address is required." };
   if (!location) return { ok: false, error: "Location is required." };
@@ -131,7 +195,13 @@ export async function submitIntakeAction(fd: FormData): Promise<ActionResult> {
   addSubmissionDraft({
     submitterName,
     submitterEmail,
-    brokerageCompany,
+    companyTeam,
+    submitterType,
+    submissionCategory,
+    publishingDestination: "Not Set",
+    projectPhase,
+    propertyArea,
+    progressDate: progressDate || "—",
     propertyName,
     propertyAddress,
     location,
@@ -143,6 +213,7 @@ export async function submitIntakeAction(fd: FormData): Promise<ActionResult> {
     internalReviewNotes: "",
     rejectionOrEditReason: "",
     adminReviewChecklist: null,
+    adminReviewFlags: emptyAdminReviewFlags(),
     mediaItems: [
       {
         mediaTitle,
@@ -165,7 +236,6 @@ export async function submitIntakeAction(fd: FormData): Promise<ActionResult> {
   return { ok: true };
 }
 
-/** FUTURE: persist via Supabase; today replaces in-memory row. */
 export async function saveInternalNotesAction(fd: FormData): Promise<ActionResult> {
   const id = str(fd, "submissionId");
   const internalReviewNotes = str(fd, "internalReviewNotes");
@@ -173,6 +243,29 @@ export async function saveInternalNotesAction(fd: FormData): Promise<ActionResul
   const sub = getSubmission(id);
   if (!sub) return { ok: false, error: "Submission not found." };
   replaceSubmission(withTimestamps(sub, { internalReviewNotes }));
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function savePublishingDestinationAction(fd: FormData): Promise<ActionResult> {
+  const id = str(fd, "submissionId");
+  const raw = str(fd, "publishingDestination");
+  if (!id) return { ok: false, error: "Missing submission id." };
+  if (!assertPublishingDestination(raw)) return { ok: false, error: "Invalid publishing destination." };
+  const sub = getSubmission(id);
+  if (!sub) return { ok: false, error: "Submission not found." };
+  replaceSubmission(withTimestamps(sub, { publishingDestination: raw }));
+  revalidatePath("/admin");
+  revalidatePath("/media");
+  return { ok: true };
+}
+
+export async function saveReviewFlagsAction(fd: FormData): Promise<ActionResult> {
+  const id = str(fd, "submissionId");
+  if (!id) return { ok: false, error: "Missing submission id." };
+  const sub = getSubmission(id);
+  if (!sub) return { ok: false, error: "Submission not found." };
+  replaceSubmission(withTimestamps(sub, { adminReviewFlags: parseReviewFlags(fd) }));
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -220,9 +313,14 @@ export async function approveForUseAction(fd: FormData): Promise<ActionResult> {
   if (sub.status !== "Submitted" && sub.status !== "Needs Review") {
     return { ok: false, error: "Approve for Use is only available from Submitted or Needs Review." };
   }
-  const checklist = parseChecklist(fd);
-  if (!checklistComplete(checklist)) {
-    return { ok: false, error: "Complete the full checklist before approving for use." };
+  const checklist = parseAdminReviewChecklist(fd);
+  if (!isChecklistComplete(checklist, sub.submissionCategory)) {
+    return {
+      ok: false,
+      error: needsConstructionReviewChecklist(sub.submissionCategory)
+        ? "Complete universal and construction review checklists before approving."
+        : "Complete the universal review checklist before approving.",
+    };
   }
   replaceSubmission(
     withTimestamps(

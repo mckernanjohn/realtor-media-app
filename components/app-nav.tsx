@@ -15,7 +15,7 @@ export function AppNav() {
             href="/"
             className="block text-[15px] font-semibold tracking-tight text-stone-900 dark:text-stone-50"
           >
-            Grey Collective — Realtor Media
+            Grey Collective — Media Intake
           </Link>
           <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500 dark:text-stone-500">
             Media intake · Review · Publishing control

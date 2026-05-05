@@ -1,5 +1,5 @@
 /**
- * In-memory mock persistence (Phase 1). Resets on cold start / serverless instance recycle.
+ * In-memory mock persistence (Phase 2). Resets on cold start / serverless instance recycle.
  * FUTURE: Supabase Postgres — submissions + media_items tables, transactions, audit trail.
  */
 
@@ -9,6 +9,11 @@ import type {
   PublicMediaEntry,
   Submission,
   WorkflowStatus,
+} from "./types";
+import {
+  emptyAdminReviewFlags,
+  isChecklistComplete,
+  PUBLIC_SAFE_SUBMISSION_CATEGORIES,
 } from "./types";
 
 const store = {
@@ -28,31 +33,47 @@ function newMediaId() {
   return `med_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
 }
 
+function fullChecklist(): AdminReviewChecklist {
+  return {
+    universal: {
+      correctProjectAssigned: true,
+      submitterTypeReviewed: true,
+      submissionCategoryReviewed: true,
+      mediaQualityAcceptable: true,
+      captionNotesReviewed: true,
+      noPrivateClientSensitiveVisible: true,
+      approvedForSelectedDestination: true,
+    },
+    construction: {
+      noUnsafeJobsiteVisible: true,
+      noTradeVendorIssueVisible: true,
+      noSensitiveAddressPermitPlanDetail: true,
+      progressPhaseAccurate: true,
+      internalOnlyDefaultConsidered: true,
+    },
+  };
+}
+
 function seedIfNeeded() {
   if (store.seeded) return;
   store.seeded = true;
 
   const t = nowIso();
-  const checklist: AdminReviewChecklist = {
-    noMlsWatermarkContamination: true,
-    noPrivateClientSensitiveContent: true,
-    noVisibleAddressIssueUnlessApproved: true,
-    propertyProjectAssignmentConfirmed: true,
-    brandAppropriateForGreyCollective: true,
-    technicalQualityAcceptable: true,
-    captionFinalCopyReviewed: true,
-    usageRightsRealtorPermissionAcceptable: true,
-    approvedForPublicUse: true,
-  };
+  const checklist = fullChecklist();
 
-  const pubId = "seed_sub_published";
-  const pubMediaId = "seed_med_published";
   store.submissions = [
+    // 1. Realtor listing — Public Media Gallery, Published → /media
     {
-      id: pubId,
+      id: "seed_sub_realtor_pub",
       submitterName: "Taylor Brooks",
       submitterEmail: "t.brooks@example.com",
-      brokerageCompany: "Grey Collective Realty",
+      companyTeam: "Grey Collective Realty",
+      submitterType: "Realtor / Broker",
+      submissionCategory: "Broker / Listing Media",
+      publishingDestination: "Public Media Gallery",
+      projectPhase: "Completed",
+      propertyArea: "Exterior",
+      progressDate: "2026-04-18",
       propertyName: "Caballo Drive Estate — Main Residence",
       propertyAddress: "4820 N Reserve Way (Caballo Drive Estate parcel)",
       location: "Paradise Valley, AZ",
@@ -65,11 +86,12 @@ function seedIfNeeded() {
       internalReviewNotes: "Seeded internal note — must never appear on /media.",
       rejectionOrEditReason: "",
       adminReviewChecklist: checklist,
+      adminReviewFlags: emptyAdminReviewFlags(),
       updatedAt: t,
       mediaItems: [
         {
-          id: pubMediaId,
-          submissionId: pubId,
+          id: "seed_med_realtor_pub",
+          submissionId: "seed_sub_realtor_pub",
           mediaTitle: "Twilight facade — hero still",
           mediaDescription: "Primary marketing still for the estate landing page.",
           suggestedCaption: "Golden hour at Caballo Drive.",
@@ -84,88 +106,67 @@ function seedIfNeeded() {
         },
       ],
     },
+    // 2. Superintendent — Internal Progress Log, Approved / Ready — not /media
     {
-      id: "seed_sub_ready",
-      submitterName: "Jordan Lee",
-      submitterEmail: "jordan@example.com",
-      brokerageCompany: "Highland Development Partners",
-      propertyName: "Hillcrest Penthouse",
-      propertyAddress: "8842 E Agave Ridge Place, Penthouse North",
+      id: "seed_sub_superintendent",
+      submitterName: "Chris Vance",
+      submitterEmail: "c.vance@example.com",
+      companyTeam: "Grey Collective Field Ops",
+      submitterType: "Superintendent",
+      submissionCategory: "Construction Progress",
+      publishingDestination: "Internal Progress Log",
+      projectPhase: "Framing",
+      propertyArea: "Jobsite / general",
+      progressDate: "2026-05-01",
+      propertyName: "7301 Mockingbird — framing progression",
+      propertyAddress: "7301 E Mockingbird Lane",
       location: "Scottsdale, AZ",
-      projectAssignment: "Hillcrest Development",
-      intendedUse: "Social media",
+      projectAssignment: "7301 Mockingbird",
+      intendedUse: "Construction update",
       status: "Ready to Publish",
       submittedAt: t,
       reviewedAt: t,
       publishedAt: null,
-      internalReviewNotes: "Awaiting final publish click.",
+      internalReviewNotes: "Weekly superintendent upload — internal routing only.",
       rejectionOrEditReason: "",
       adminReviewChecklist: checklist,
+      adminReviewFlags: { ...emptyAdminReviewFlags(), constructionProgressOnlyNotMarketingSafe: true },
       updatedAt: t,
       mediaItems: [
         {
-          id: "seed_med_ready",
-          submissionId: "seed_sub_ready",
-          mediaTitle: "Skyline reel cutdown",
-          mediaDescription: "15s vertical for Instagram.",
-          suggestedCaption: "Views for days.",
-          finalCaption: "Skyline views — Hillcrest Development.",
-          mediaType: "Reel",
-          fileName: "hillcrest-reel.mp4",
-          mimeType: "video/mp4",
-          mockSizeLabel: "22 MB",
-          previewLabel: "HL",
+          id: "seed_med_super",
+          submissionId: "seed_sub_superintendent",
+          mediaTitle: "Level 2 deck framing — north elevation",
+          mediaDescription: "Progress documentation for weekly internal log.",
+          suggestedCaption: "Framing progress week 18.",
+          finalCaption: "",
+          mediaType: "Construction Update",
+          fileName: "mockingbird-framing.jpg",
+          mimeType: "image/jpeg",
+          mockSizeLabel: "3.1 MB",
+          previewLabel: "CV",
           sortOrder: 0,
           mediaStatus: "Ready to Publish",
         },
       ],
     },
+    // 3. Project Manager milestone — Internal Progress Log, Needs Review
     {
-      id: "seed_sub_approved",
-      submitterName: "Sam Rivera",
-      submitterEmail: "sam@example.com",
-      brokerageCompany: "Rivera Team",
-      propertyName: "Via Los Ranchos compound",
-      propertyAddress: "12440 N Mountain Preserve Way (Via Los Ranchos Estate)",
-      location: "Paradise Valley, AZ",
-      projectAssignment: "Via Los Ranchos Estate",
-      intendedUse: "Listing support",
-      status: "Approved for Use",
-      submittedAt: t,
-      reviewedAt: t,
-      publishedAt: null,
-      internalReviewNotes: "Approved internally — not public until publish.",
-      rejectionOrEditReason: "",
-      adminReviewChecklist: checklist,
-      updatedAt: t,
-      mediaItems: [
-        {
-          id: "seed_med_appr",
-          submissionId: "seed_sub_approved",
-          mediaTitle: "Pool & guest house",
-          mediaDescription: "Daytime still set.",
-          suggestedCaption: "Resort-like grounds.",
-          finalCaption: "",
-          mediaType: "Photo",
-          fileName: "vlr-pool.webp",
-          mimeType: "image/webp",
-          mockSizeLabel: "2.1 MB",
-          previewLabel: "VR",
-          sortOrder: 0,
-          mediaStatus: "Approved for Use",
-        },
-      ],
-    },
-    {
-      id: "seed_sub_needs_review",
-      submitterName: "Alex Morgan",
-      submitterEmail: "alex@example.com",
-      brokerageCompany: "Morgan Estates",
-      propertyName: "Mockingbird modern",
-      propertyAddress: "7301 E Mockingbird Lane",
+      id: "seed_sub_pm_milestone",
+      submitterName: "Jordan Lee",
+      submitterEmail: "jordan@example.com",
+      companyTeam: "Highland Development Partners",
+      submitterType: "Project Manager",
+      submissionCategory: "Project Milestone",
+      publishingDestination: "Internal Progress Log",
+      projectPhase: "Mechanical / Electrical / Plumbing",
+      propertyArea: "Mechanical room",
+      progressDate: "2026-04-28",
+      propertyName: "Hillcrest — MEP rough-in sign-off",
+      propertyAddress: "8842 E Agave Ridge Place, Penthouse North",
       location: "Scottsdale, AZ",
-      projectAssignment: "7301 Mockingbird",
-      intendedUse: "Construction update",
+      projectAssignment: "Hillcrest Development",
+      intendedUse: "Internal review",
       status: "Needs Review",
       submittedAt: t,
       reviewedAt: null,
@@ -173,67 +174,215 @@ function seedIfNeeded() {
       internalReviewNotes: "",
       rejectionOrEditReason: "",
       adminReviewChecklist: null,
+      adminReviewFlags: emptyAdminReviewFlags(),
       updatedAt: t,
       mediaItems: [
         {
-          id: "seed_med_nr",
-          submissionId: "seed_sub_needs_review",
-          mediaTitle: "Site progress — week 12",
-          mediaDescription: "Exterior shell complete.",
-          suggestedCaption: "Progress update.",
+          id: "seed_med_pm",
+          submissionId: "seed_sub_pm_milestone",
+          mediaTitle: "MEP rough-in — milestone photo set",
+          mediaDescription: "Rough-in complete prior to drywall close.",
+          suggestedCaption: "MEP milestone.",
           finalCaption: "",
-          mediaType: "Construction Update",
-          fileName: "mockingbird-progress.png",
-          mimeType: "image/png",
-          mockSizeLabel: "900 KB",
-          previewLabel: "MB",
+          mediaType: "Photo",
+          fileName: "hillcrest-mep.jpg",
+          mimeType: "image/jpeg",
+          mockSizeLabel: "2.4 MB",
+          previewLabel: "HL",
           sortOrder: 0,
           mediaStatus: "Needs Review",
         },
       ],
     },
+    // 4. Marketing — Social Media Queue, Ready to Publish
     {
-      id: "seed_sub_needs_edits",
-      submitterName: "Riley Chen",
-      submitterEmail: "riley@example.com",
-      brokerageCompany: "Chen Collective",
-      propertyName: "New spec — TBD",
-      propertyAddress: "TBD lot — Silverleaf vicinity, survey pending",
-      location: "Scottsdale, AZ",
-      projectAssignment: "Unknown / Needs Admin Assignment",
-      intendedUse: "Unknown",
-      status: "Needs Edits",
+      id: "seed_sub_marketing_social",
+      submitterName: "Sam Rivera",
+      submitterEmail: "sam@example.com",
+      companyTeam: "Rivera Creative",
+      submitterType: "Marketing Team",
+      submissionCategory: "Social Media Content",
+      publishingDestination: "Social Media Queue",
+      projectPhase: "Not applicable",
+      propertyArea: "Pool / exterior living",
+      progressDate: "2026-04-22",
+      propertyName: "Via Los Ranchos — pool pavilion reel",
+      propertyAddress: "12440 N Mountain Preserve Way",
+      location: "Paradise Valley, AZ",
+      projectAssignment: "Via Los Ranchos Estate",
+      intendedUse: "Social media",
+      status: "Ready to Publish",
       submittedAt: t,
       reviewedAt: t,
       publishedAt: null,
-      internalReviewNotes: "Address TBD blocked publish path.",
-      rejectionOrEditReason: "Please confirm full property address and project assignment.",
-      adminReviewChecklist: null,
+      internalReviewNotes: "Queued for social scheduler — not public gallery.",
+      rejectionOrEditReason: "",
+      adminReviewChecklist: checklist,
+      adminReviewFlags: emptyAdminReviewFlags(),
       updatedAt: t,
       mediaItems: [
         {
-          id: "seed_med_edits",
-          submissionId: "seed_sub_needs_edits",
-          mediaTitle: "Placeholder hero",
-          mediaDescription: "Temporary asset.",
-          suggestedCaption: "TBD",
-          finalCaption: "",
-          mediaType: "Listing Media",
-          fileName: "placeholder.mov",
-          mimeType: "video/quicktime",
-          mockSizeLabel: "41 MB",
-          previewLabel: "RC",
+          id: "seed_med_social",
+          submissionId: "seed_sub_marketing_social",
+          mediaTitle: "15s vertical — pool pavilion dusk",
+          mediaDescription: "Short-form clip for approved social channels.",
+          suggestedCaption: "Desert evenings at Via Los Ranchos.",
+          finalCaption: "Evening light at Via Los Ranchos Estate.",
+          mediaType: "Reel",
+          fileName: "vlr-pool-reel.mp4",
+          mimeType: "video/mp4",
+          mockSizeLabel: "19 MB",
+          previewLabel: "VL",
           sortOrder: 0,
-          mediaStatus: "Needs Edits",
+          mediaStatus: "Ready to Publish",
         },
       ],
     },
+    // 5. Photographer — Public Media Gallery, Published → /media
+    {
+      id: "seed_sub_photo_finished",
+      submitterName: "Alex Morgan",
+      submitterEmail: "alex@example.com",
+      companyTeam: "Morgan Visuals",
+      submitterType: "Photographer / Videographer",
+      submissionCategory: "Finished Project Media",
+      publishingDestination: "Public Media Gallery",
+      projectPhase: "Completed",
+      propertyArea: "Interior",
+      progressDate: "2026-03-15",
+      propertyName: "Silverleaf Ridge Villa — great room",
+      propertyAddress: "North Scottsdale, Silverleaf enclave (marketing address)",
+      location: "Scottsdale, AZ",
+      projectAssignment: "Silverleaf Ridge Villa",
+      intendedUse: "Website",
+      status: "Published",
+      submittedAt: t,
+      reviewedAt: t,
+      publishedAt: t,
+      internalReviewNotes: "Architectural photography — cleared for public gallery.",
+      rejectionOrEditReason: "",
+      adminReviewChecklist: checklist,
+      adminReviewFlags: emptyAdminReviewFlags(),
+      updatedAt: t,
+      mediaItems: [
+        {
+          id: "seed_med_photo",
+          submissionId: "seed_sub_photo_finished",
+          mediaTitle: "Great room — finished interiors",
+          mediaDescription: "Editorial still for portfolio and public gallery.",
+          suggestedCaption: "Tailored desert modern living.",
+          finalCaption: "Silverleaf Ridge Villa — great room, completed by Grey Collective.",
+          mediaType: "Photo",
+          fileName: "slv-great-room.webp",
+          mimeType: "image/webp",
+          mockSizeLabel: "5.6 MB",
+          previewLabel: "SR",
+          sortOrder: 0,
+          mediaStatus: "Published",
+        },
+      ],
+    },
+    // 6. Website hero — Website Project Page, Published — not /media
+    {
+      id: "seed_sub_website_hero",
+      submitterName: "Riley Chen",
+      submitterEmail: "riley@example.com",
+      companyTeam: "Chen Collective",
+      submitterType: "Internal Team",
+      submissionCategory: "Finished Project Media",
+      publishingDestination: "Website Project Page",
+      projectPhase: "Completed",
+      propertyArea: "Exterior",
+      progressDate: "2026-04-10",
+      propertyName: "Caballo Drive — project page hero",
+      propertyAddress: "4820 N Reserve Way",
+      location: "Paradise Valley, AZ",
+      projectAssignment: "Caballo Drive Estate",
+      intendedUse: "Website",
+      status: "Published",
+      submittedAt: t,
+      reviewedAt: t,
+      publishedAt: t,
+      internalReviewNotes: "Published to website project page only.",
+      rejectionOrEditReason: "",
+      adminReviewChecklist: checklist,
+      adminReviewFlags: emptyAdminReviewFlags(),
+      updatedAt: t,
+      mediaItems: [
+        {
+          id: "seed_med_webhero",
+          submissionId: "seed_sub_website_hero",
+          mediaTitle: "Hero still — primary elevation",
+          mediaDescription: "Wide hero for Caballo project detail page.",
+          suggestedCaption: "Desert modern elevation.",
+          finalCaption: "Caballo Drive Estate — primary elevation.",
+          mediaType: "Photo",
+          fileName: "caballo-hero-wide.jpg",
+          mimeType: "image/jpeg",
+          mockSizeLabel: "6.2 MB",
+          previewLabel: "CD",
+          sortOrder: 0,
+          mediaStatus: "Published",
+        },
+      ],
+    },
+    // 7. Client / investor — Published but not public gallery
+    {
+      id: "seed_sub_investor_safe",
+      submitterName: "Morgan Blake",
+      submitterEmail: "morgan@example.com",
+      companyTeam: "Blake Group",
+      submitterType: "Project Manager",
+      submissionCategory: "Construction Progress",
+      publishingDestination: "Client / Investor Portal",
+      projectPhase: "Drywall",
+      propertyArea: "Interior",
+      progressDate: "2026-04-25",
+      propertyName: "Hillcrest — investor-safe progress still",
+      propertyAddress: "8842 E Agave Ridge Place",
+      location: "Scottsdale, AZ",
+      projectAssignment: "Hillcrest Development",
+      intendedUse: "Internal review",
+      status: "Published",
+      submittedAt: t,
+      reviewedAt: t,
+      publishedAt: t,
+      internalReviewNotes: "Sanitized for investor portal — not marketing gallery.",
+      rejectionOrEditReason: "",
+      adminReviewChecklist: checklist,
+      adminReviewFlags: emptyAdminReviewFlags(),
+      updatedAt: t,
+      mediaItems: [
+        {
+          id: "seed_med_investor",
+          submissionId: "seed_sub_investor_safe",
+          mediaTitle: "Drywall close — living volume",
+          mediaDescription: "Progress update suitable for client portal distribution.",
+          suggestedCaption: "Interior progression.",
+          finalCaption: "Hillcrest Development — interior progression, April 2026.",
+          mediaType: "Photo",
+          fileName: "hillcrest-drywall.jpg",
+          mimeType: "image/jpeg",
+          mockSizeLabel: "2.9 MB",
+          previewLabel: "HB",
+          sortOrder: 0,
+          mediaStatus: "Published",
+        },
+      ],
+    },
+    // 8. Rejected — watermark / private content
     {
       id: "seed_sub_rejected",
       submitterName: "Casey Ng",
       submitterEmail: "casey@example.com",
-      brokerageCompany: "Ng & Partners",
-      propertyName: "Off-market teaser",
+      companyTeam: "Ng & Partners",
+      submitterType: "Realtor / Broker",
+      submissionCategory: "Broker / Listing Media",
+      publishingDestination: "Not Set",
+      projectPhase: "Not applicable",
+      propertyArea: "Interior",
+      progressDate: "2026-04-12",
+      propertyName: "Off-market teaser — living pano",
       propertyAddress: "Address withheld — North Scottsdale enclave (off-market)",
       location: "Scottsdale, AZ",
       projectAssignment: "Other / New Property",
@@ -245,6 +394,7 @@ function seedIfNeeded() {
       internalReviewNotes: "",
       rejectionOrEditReason: "MLS sheet visible in frame — resubmit without overlays.",
       adminReviewChecklist: null,
+      adminReviewFlags: { ...emptyAdminReviewFlags(), mlsWatermarkIssue: true, privateClientSensitiveContent: true },
       updatedAt: t,
       mediaItems: [
         {
@@ -264,16 +414,23 @@ function seedIfNeeded() {
         },
       ],
     },
+    // 9. Archived
     {
       id: "seed_sub_archived",
-      submitterName: "Morgan Blake",
-      submitterEmail: "morgan@example.com",
-      brokerageCompany: "Blake Group",
+      submitterName: "Pat Ellis",
+      submitterEmail: "pat@example.com",
+      companyTeam: "Ellis Residential",
+      submitterType: "Realtor / Broker",
+      submissionCategory: "Broker / Listing Media",
+      publishingDestination: "Not Set",
+      projectPhase: "Completed",
+      propertyArea: "Exterior",
+      progressDate: "2025-11-02",
       propertyName: "Legacy listing — withdrawn",
       propertyAddress: "4621 N Dawn Vista Lane",
       location: "Scottsdale, AZ",
       projectAssignment: "Other / New Property",
-      intendedUse: "Website",
+      intendedUse: "Listing support",
       status: "Archived",
       submittedAt: t,
       reviewedAt: t,
@@ -281,6 +438,7 @@ function seedIfNeeded() {
       internalReviewNotes: "Withdrawn from marketing.",
       rejectionOrEditReason: "",
       adminReviewChecklist: null,
+      adminReviewFlags: emptyAdminReviewFlags(),
       updatedAt: t,
       mediaItems: [
         {
@@ -294,7 +452,7 @@ function seedIfNeeded() {
           fileName: "deck-view.jpg",
           mimeType: "image/jpeg",
           mockSizeLabel: "3.3 MB",
-          previewLabel: "MB",
+          previewLabel: "PE",
           sortOrder: 0,
           mediaStatus: "Archived",
         },
@@ -321,15 +479,22 @@ export function getSubmission(id: string): Submission | undefined {
   return store.submissions.find((s) => s.id === id);
 }
 
-/** Public gallery: Published submission × Published media only — no PII beyond what’s safe on-site. */
+/**
+ * Public marketing gallery: Published + Public Media Gallery only.
+ * No PII; categories shown only when public-safe labels apply.
+ */
 export function listPublicMediaEntries(): PublicMediaEntry[] {
   seedIfNeeded();
   const out: PublicMediaEntry[] = [];
   for (const sub of store.submissions) {
     if (sub.status !== "Published" || !sub.publishedAt) continue;
+    if (sub.publishingDestination !== "Public Media Gallery") continue;
     for (const m of sub.mediaItems) {
       if (m.mediaStatus !== "Published") continue;
       const caption = m.finalCaption.trim() || m.suggestedCaption.trim();
+      const categoryLabel = PUBLIC_SAFE_SUBMISSION_CATEGORIES.includes(sub.submissionCategory)
+        ? sub.submissionCategory
+        : undefined;
       out.push({
         id: `${sub.id}::${m.id}`,
         propertyName: sub.propertyName,
@@ -341,6 +506,7 @@ export function listPublicMediaEntries(): PublicMediaEntry[] {
         mediaType: m.mediaType,
         publishedAt: sub.publishedAt,
         previewLabel: m.previewLabel,
+        submissionCategoryLabel: categoryLabel,
       });
     }
   }
@@ -358,7 +524,11 @@ export function replaceSubmission(next: Submission) {
   return next;
 }
 
-export function addSubmissionDraft(input: Omit<Submission, "id" | "submittedAt" | "updatedAt" | "mediaItems"> & { mediaItems: Omit<MediaItem, "id" | "submissionId">[] }) {
+export function addSubmissionDraft(
+  input: Omit<Submission, "id" | "submittedAt" | "updatedAt" | "mediaItems"> & {
+    mediaItems: Omit<MediaItem, "id" | "submissionId">[];
+  },
+) {
   seedIfNeeded();
   const iso = nowIso();
   const sid = newSubmissionId();
@@ -379,23 +549,10 @@ export function addSubmissionDraft(input: Omit<Submission, "id" | "submittedAt" 
   return row;
 }
 
-function checklistComplete(c: AdminReviewChecklist | null): c is AdminReviewChecklist {
-  if (!c) return false;
-  return (
-    c.noMlsWatermarkContamination &&
-    c.noPrivateClientSensitiveContent &&
-    c.noVisibleAddressIssueUnlessApproved &&
-    c.propertyProjectAssignmentConfirmed &&
-    c.brandAppropriateForGreyCollective &&
-    c.technicalQualityAcceptable &&
-    c.captionFinalCopyReviewed &&
-    c.usageRightsRealtorPermissionAcceptable &&
-    c.approvedForPublicUse
-  );
-}
-
 export function submissionAllowsPublish(sub: Submission): boolean {
   if (sub.status === "Ready to Publish") return true;
-  if (sub.status === "Approved for Use" && checklistComplete(sub.adminReviewChecklist)) return true;
+  if (sub.status === "Approved for Use" && isChecklistComplete(sub.adminReviewChecklist, sub.submissionCategory)) {
+    return true;
+  }
   return false;
 }

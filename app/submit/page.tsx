@@ -5,7 +5,7 @@ import { SubmitMediaForm } from "@/components/submit-media-form";
 
 export const metadata: Metadata = {
   title: "Submit media",
-  description: "Grey Collective Realtor Media — business intake (Phase 1 mock).",
+  description: "Grey Collective Media Intake — project and marketing asset intake (Phase 2 mock).",
 };
 
 export default function SubmitPage() {
@@ -13,8 +13,8 @@ export default function SubmitPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-14 sm:px-6 sm:py-16">
       <PageHero
         title="Media intake"
-        subtitle="Complete the business fields and attach one mock file (metadata only — no upload occurs). Your entry is stored as a submission with an attached media item so the eventual production model stays straightforward."
-        summary="Controlled mock: data stays in this session; publishing remains admin-only after review."
+        subtitle="For brokers, superintendents, project managers, marketing, photographers, and internal teams. Complete the fields and attach one mock file (metadata only — no upload). Staff control publishing destination; you can suggest intended use only."
+        summary="Construction progress defaults to internal review. Nothing appears on the public gallery until an admin publishes to Public Media Gallery."
       />
       <div className="mt-12">
         <SubmitMediaForm />

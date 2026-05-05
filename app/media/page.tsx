@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Public media",
-  description: "Grey Collective — published realtor media (Phase 1 mock gallery).",
+  description: "Grey Collective — Public Media Gallery only (Phase 2 mock).",
 };
 
 export default function MediaPage() {
@@ -19,16 +19,16 @@ export default function MediaPage() {
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-14 sm:px-6 sm:py-16">
       <PageHero
         title="Public media gallery"
-        subtitle="A client-facing view of Published work only. No submitter contact details, internal notes, rejection context, or non-published statuses appear here."
-        summary="Curated presentation for Scottsdale and Paradise Valley luxury residential marketing."
+        subtitle="Marketing-safe items only: status Published and publishing destination Public Media Gallery. No construction-only routing, internal destinations, submitter contact fields, notes, or non-published work."
+        summary="Curated for Arizona luxury residential — Paradise Valley, Scottsdale, and Grey Collective developments."
       />
 
       {entries.length === 0 ? (
         <div className="mt-14 rounded-2xl border border-stone-200/90 bg-[var(--card)] px-6 py-20 text-center shadow-[var(--shadow-card)] dark:border-stone-800">
           <p className="text-sm font-medium text-stone-800 dark:text-stone-200">Nothing published yet</p>
           <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            When Admin publishes a submission, it will appear here with editorial caption and description — still
-            using mock media placeholders until production storage is connected.
+            Items appear only when staff set destination to Public Media Gallery and publish. Mock placeholders stand
+            in for future managed assets.
           </p>
         </div>
       ) : (
@@ -63,7 +63,14 @@ export default function MediaPage() {
                     <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">{item.location}</p>
                   </div>
                   <div className="border-t border-stone-200/80 pt-5 dark:border-stone-800">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-stone-400">
+                    {item.submissionCategoryLabel ? (
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-stone-400">
+                        {item.submissionCategoryLabel}
+                      </p>
+                    ) : null}
+                    <p
+                      className={`text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-stone-400 ${item.submissionCategoryLabel ? "mt-2" : ""}`}
+                    >
                       {item.mediaType}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-stone-900 dark:text-stone-50">{item.mediaTitle}</p>

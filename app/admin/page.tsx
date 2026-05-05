@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Admin review",
-  description: "Grey Collective Realtor Media — admin queue (Phase 1, no auth).",
+  description: "Grey Collective Media Intake — admin queue and publishing destinations (Phase 2 mock, no auth).",
 };
 
 type Search = { filter?: string };
@@ -32,8 +32,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-14 sm:px-6 sm:py-16">
       <PageHero
         title="Admin review"
-        subtitle="Internal console — no authentication in Phase 1. Filter the queue, complete the checklist, and move approved work toward publishing. Only Published submissions appear on the public media gallery."
-        summary="Use filters to focus the queue; publish only when checklist and captions are ready."
+        subtitle="Internal console — no authentication in this mock. Set publishing destination (admin-only), run universal and construction checklists where required, then publish. The public /media gallery lists only Published items with destination Public Media Gallery."
+        summary="Construction progress should default to internal routing until explicitly cleared for the public gallery."
       />
 
       <nav
