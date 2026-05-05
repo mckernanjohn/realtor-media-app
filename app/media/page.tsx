@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 /** FUTURE: read from public media API + CDN; strip all non-public fields at the edge. */
+import { PageHero } from "@/components/page-hero";
 import { listPublicMediaEntries } from "@/lib/media/mock-store";
 
 export const dynamic = "force-dynamic";
@@ -12,61 +13,70 @@ export const metadata: Metadata = {
 
 export default function MediaPage() {
   const entries = listPublicMediaEntries();
+  const single = entries.length === 1;
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
-      <header className="max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
-          Public media
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-          Only <span className="font-medium text-stone-800 dark:text-stone-200">Published</span>{" "}
-          submissions appear here. No submitter email, internal notes, rejection reasons, or
-          non-published statuses.
-        </p>
-      </header>
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-14 sm:px-6 sm:py-16">
+      <PageHero
+        title="Public media gallery"
+        subtitle="A client-facing view of Published work only. No submitter contact details, internal notes, rejection context, or non-published statuses appear here."
+        summary="Curated presentation for Scottsdale and Paradise Valley luxury residential marketing."
+      />
 
       {entries.length === 0 ? (
-        <p className="mt-12 text-sm text-stone-600 dark:text-stone-400">
-          Nothing published yet. Use Admin to move a submission through review and publish.
-        </p>
+        <div className="mt-14 rounded-2xl border border-stone-200/90 bg-[var(--card)] px-6 py-20 text-center shadow-[var(--shadow-card)] dark:border-stone-800">
+          <p className="text-sm font-medium text-stone-800 dark:text-stone-200">Nothing published yet</p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+            When Admin publishes a submission, it will appear here with editorial caption and description — still
+            using mock media placeholders until production storage is connected.
+          </p>
+        </div>
       ) : (
-        <ul className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ul
+          className={`mt-14 grid gap-8 sm:grid-cols-2 xl:grid-cols-3 ${single ? "sm:grid-cols-1 xl:max-w-2xl xl:mx-auto" : ""}`}
+        >
           {entries.map((item) => (
             <li key={item.id}>
-              <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-950">
-                <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-200 via-stone-50 to-amber-100/30 dark:from-stone-800 dark:via-stone-900 dark:to-stone-950">
+              <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200/90 bg-[var(--card)] shadow-[var(--shadow-card)] transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] dark:border-stone-800">
+                <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(145deg,#e7e5e4_0%,#fafaf9_40%,#d6d3d1_100%)] dark:bg-[linear-gradient(145deg,#292524_0%,#1c1917_45%,#44403c_100%)]">
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-[0.12] dark:opacity-[0.1]"
+                    style={{
+                      backgroundImage: `repeating-linear-gradient(-12deg, transparent, transparent 6px, rgba(28,25,23,0.07) 6px, rgba(28,25,23,0.07) 7px)`,
+                    }}
+                  />
                   <div className="absolute inset-0 flex items-center justify-center text-3xl font-semibold tracking-tight text-stone-600 dark:text-stone-300">
                     {item.previewLabel}
                   </div>
-                  <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600 shadow-sm dark:bg-stone-950/90 dark:text-stone-300">
-                    Placeholder — FUTURE: Supabase Storage + CDN asset
+                  <span className="absolute bottom-3 left-3 right-3 rounded-lg bg-stone-950/85 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-100 backdrop-blur-sm dark:bg-stone-950/90">
+                    Mock preview · future managed storage and CDN
                   </span>
                 </div>
-                <div className="flex flex-1 flex-col gap-3 p-6">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                    {item.projectName}
-                  </p>
-                  <h2 className="text-lg font-semibold leading-snug text-stone-900 dark:text-stone-50">
-                    {item.propertyName}
-                  </h2>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">{item.location}</p>
-                  <div className="border-t border-stone-100 pt-4 dark:border-stone-800">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                <div className="flex flex-1 flex-col gap-4 p-7">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
+                      {item.projectName}
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-stone-900 dark:text-stone-50">
+                      {item.propertyName}
+                    </h2>
+                    <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">{item.location}</p>
+                  </div>
+                  <div className="border-t border-stone-200/80 pt-5 dark:border-stone-800">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-stone-400">
                       {item.mediaType}
                     </p>
-                    <p className="mt-1 text-sm font-medium text-stone-900 dark:text-stone-50">
-                      {item.mediaTitle}
-                    </p>
-                    <p className="mt-2 text-sm font-serif text-stone-800 dark:text-stone-200">
+                    <p className="mt-2 text-sm font-semibold text-stone-900 dark:text-stone-50">{item.mediaTitle}</p>
+                    <p className="mt-3 text-sm font-serif leading-relaxed text-stone-800 dark:text-stone-200">
                       {item.finalCaption}
                     </p>
                     <p className="mt-3 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
                       {item.mediaDescription}
                     </p>
                   </div>
-                  <p className="mt-auto pt-2 text-[10px] font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
-                    Published {new Date(item.publishedAt).toLocaleDateString(undefined, { dateStyle: "long" })}
+                  <p className="mt-auto border-t border-stone-100 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-400 dark:border-stone-800 dark:text-stone-500">
+                    Published{" "}
+                    {new Date(item.publishedAt).toLocaleDateString(undefined, { dateStyle: "long" })}
                   </p>
                 </div>
               </article>

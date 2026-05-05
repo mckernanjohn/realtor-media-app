@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PageHero } from "@/components/page-hero";
 import { AdminSubmissionCard } from "@/components/admin-submission-card";
 import { listSubmissionsFiltered, submissionAllowsPublish } from "@/lib/media/mock-store";
 import { ADMIN_FILTER_STATUSES } from "@/lib/media/types";
@@ -28,22 +29,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const rows = listSubmissionsFiltered(filter);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6">
-      <header className="max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
-          Admin review
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-          Phase 1 mock console — no authentication. Filter the queue, complete the checklist, move work
-          toward <span className="font-medium text-stone-800 dark:text-stone-200">Ready to Publish</span>
-          , then <span className="font-medium text-stone-800 dark:text-stone-200">Publish</span>. Only{" "}
-          <span className="font-medium">Published</span> rows surface on public{" "}
-          <span className="font-medium">/media</span>.
-        </p>
-      </header>
+    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-14 sm:px-6 sm:py-16">
+      <PageHero
+        title="Admin review"
+        subtitle="Internal console — no authentication in Phase 1. Filter the queue, complete the checklist, and move approved work toward publishing. Only Published submissions appear on the public media gallery."
+        summary="Use filters to focus the queue; publish only when checklist and captions are ready."
+      />
 
       <nav
-        className="mt-8 flex flex-wrap gap-2"
+        className="mt-10 flex flex-wrap gap-2"
         aria-label="Filter submissions by status"
       >
         {ADMIN_FILTER_STATUSES.map((s) => {
@@ -53,10 +47,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <Link
               key={s}
               href={href}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition ${
+              className={`rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-[background-color,color,box-shadow] ${
                 active
-                  ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-                  : "border border-stone-200 bg-white text-stone-700 hover:border-stone-300 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200 dark:hover:border-stone-600"
+                  ? "bg-stone-900 text-white shadow-[var(--shadow-card)] dark:bg-stone-100 dark:text-stone-900"
+                  : "border border-stone-200/90 bg-[var(--card)] text-stone-700 shadow-sm hover:border-stone-300 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200 dark:hover:border-stone-600"
               }`}
             >
               {s}
@@ -65,9 +59,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         })}
       </nav>
 
-      <section className="mt-10 space-y-8" aria-label="Submission queue">
+      <section className="mt-12 space-y-10" aria-label="Submission queue">
         {rows.length === 0 ? (
-          <p className="text-sm text-stone-600 dark:text-stone-400">No submissions in this filter.</p>
+          <div className="rounded-2xl border border-dashed border-stone-300/80 bg-[var(--card)] px-6 py-14 text-center shadow-[var(--shadow-card)] dark:border-stone-700">
+            <p className="text-sm font-medium text-stone-800 dark:text-stone-200">No submissions in this view</p>
+            <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+              Choose another filter or wait for new intake from Submit.
+            </p>
+          </div>
         ) : (
           rows.map((row) => (
             <AdminSubmissionCard key={row.id} row={row} canPublish={submissionAllowsPublish(row)} />

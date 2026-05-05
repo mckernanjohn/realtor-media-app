@@ -38,7 +38,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-stone-100 text-stone-950 dark:bg-stone-950 dark:text-stone-50">
+      <body className="flex min-h-full flex-col bg-background text-foreground">
         <AppNav />
         {children}
       </body>

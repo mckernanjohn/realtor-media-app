@@ -31,9 +31,16 @@ function formatBytes(n: number): string {
 }
 
 const fieldClass =
-  "w-full rounded-lg border border-stone-200/90 bg-white px-3 py-2.5 text-sm text-stone-900 shadow-sm outline-none ring-stone-400/30 placeholder:text-stone-400 focus:ring-2 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100 dark:ring-stone-600/40";
+  "w-full rounded-xl border border-stone-200/90 bg-white px-3.5 py-2.5 text-sm text-stone-900 shadow-[0_1px_0_rgba(28,25,23,0.03)] outline-none ring-stone-400/25 placeholder:text-stone-400 focus:border-stone-300 focus:ring-2 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100 dark:shadow-none dark:ring-stone-600/35";
 
-const labelClass = "text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400";
+const labelClass = "text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500 dark:text-stone-400";
+
+const sectionShell =
+  "space-y-6 rounded-2xl border border-stone-200/90 bg-[var(--card)] p-7 shadow-[var(--shadow-card)] dark:border-stone-800";
+
+const sectionTitle = "text-[13px] font-semibold tracking-tight text-stone-900 dark:text-stone-50";
+
+const sectionHint = "mt-1.5 text-xs leading-relaxed text-stone-500 dark:text-stone-400";
 
 export function SubmitMediaForm() {
   const router = useRouter();
@@ -58,7 +65,7 @@ export function SubmitMediaForm() {
 
   return (
     <form
-      className="space-y-10"
+      className="space-y-8"
       action={(formData) => {
         setServerError(null);
         setDone(false);
@@ -75,14 +82,15 @@ export function SubmitMediaForm() {
         });
       }}
     >
-      <section className="space-y-5 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-950">
-        <header>
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">Contact & brokerage</h2>
-          <p className="mt-1 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            Mock intake — no data leaves this environment. Later: Supabase + auth + CRM sync.
+      <section className={sectionShell}>
+        <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
+          <h2 className={sectionTitle}>Contact & brokerage</h2>
+          <p className={sectionHint}>
+            Mock intake — nothing is persisted beyond this server session. Later phases add secure storage and
+            identity.
           </p>
         </header>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="block space-y-2">
             <span className={labelClass}>Submitter name</span>
             <input name="submitterName" required className={fieldClass} placeholder="Full name" />
@@ -104,11 +112,12 @@ export function SubmitMediaForm() {
         </div>
       </section>
 
-      <section className="space-y-5 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-950">
-        <header>
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">Property</h2>
+      <section className={sectionShell}>
+        <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
+          <h2 className={sectionTitle}>Property</h2>
+          <p className={sectionHint}>Marketing context for the listing or development assignment.</p>
         </header>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="block space-y-2 sm:col-span-2">
             <span className={labelClass}>Property name</span>
             <input name="propertyName" required className={fieldClass} placeholder="Marketing name" />
@@ -144,14 +153,15 @@ export function SubmitMediaForm() {
         </div>
       </section>
 
-      <section className="space-y-5 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-950">
-        <header>
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">Media details</h2>
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Phase 1 supports one media row per submission; the array shape is forward-compatible.
+      <section className={sectionShell}>
+        <header className="border-b border-stone-200/70 pb-5 dark:border-stone-800">
+          <h2 className={sectionTitle}>Media details</h2>
+          <p className={sectionHint}>
+            Phase 1 captures one media row per submission; the model is ready for multiple assets later without
+            rework.
           </p>
         </header>
-        <div className="grid gap-4">
+        <div className="grid gap-5">
           <label className="block space-y-2">
             <span className={labelClass}>Media title</span>
             <input name="mediaTitle" required className={fieldClass} />
@@ -177,46 +187,52 @@ export function SubmitMediaForm() {
         </div>
       </section>
 
-      <section className="space-y-5 rounded-2xl border border-dashed border-stone-300/90 bg-stone-50/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
-        <header>
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">Mock file selection</h2>
-          <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-            JPG, JPEG, PNG, WEBP, MP4, MOV — client-side checks only.{" "}
-            <span className="font-medium text-stone-800 dark:text-stone-200">
-              Supabase Storage will replace this layer.
-            </span>
+      <section className="space-y-6 rounded-2xl border border-dashed border-stone-300/80 bg-stone-900/[0.02] p-7 dark:border-stone-600 dark:bg-stone-950/40">
+        <header className="border-b border-stone-200/60 pb-5 dark:border-stone-800">
+          <h2 className={sectionTitle}>Mock file selection</h2>
+          <p className={sectionHint}>
+            JPG, JPEG, PNG, WEBP, MP4, MOV — client-side checks only. No bytes are uploaded; a future managed
+            storage layer will replace this step.
           </p>
         </header>
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 space-y-3">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1 space-y-4">
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
-              className="block w-full max-w-lg text-sm text-stone-700 file:mr-3 file:rounded-lg file:border-0 file:bg-stone-900 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-stone-50 hover:file:bg-stone-800 dark:text-stone-300 dark:file:bg-stone-100 dark:file:text-stone-900"
+              className="block w-full max-w-lg text-sm text-stone-700 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-stone-900 file:px-5 file:py-2.5 file:text-xs file:font-semibold file:text-stone-50 file:shadow-sm hover:file:bg-stone-800 dark:text-stone-300 dark:file:bg-stone-100 dark:file:text-stone-900 dark:hover:file:bg-white"
               onChange={(e) => onPick(e.target.files?.[0] ?? null)}
             />
             {file && validation ? (
-              <ul className="space-y-1.5 rounded-xl border border-stone-200 bg-white p-4 text-xs leading-relaxed text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300">
+              <ul className="space-y-1.5 rounded-xl border border-stone-200/90 bg-[var(--card)] p-4 text-xs leading-relaxed text-stone-700 shadow-sm dark:border-stone-800 dark:text-stone-300">
                 {validation.messages.map((m) => (
                   <li key={m}>• {m}</li>
                 ))}
               </ul>
             ) : (
               <p className="text-xs text-stone-500 dark:text-stone-500">
-                Pick a file to see filename, MIME label, size messaging, and unsupported-type / oversized
-                copy.
+                Choose a file to see filename, type, size messaging, and validation notes.
               </p>
             )}
           </div>
-          <div className="w-full shrink-0 lg:w-52">
+          <div className="w-full shrink-0 lg:w-56">
             <div
-              className="flex aspect-[4/3] w-full items-center justify-center rounded-xl border border-stone-200 bg-gradient-to-br from-stone-200 via-stone-50 to-amber-100/40 text-2xl font-semibold tracking-tight text-stone-700 shadow-inner dark:border-stone-700 dark:from-stone-800 dark:via-stone-900 dark:to-stone-950 dark:text-stone-200"
+              className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-stone-200/90 bg-[linear-gradient(145deg,#e7e5e4_0%,#fafaf9_42%,#d6d3d1_100%)] text-2xl font-semibold tracking-tight text-stone-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),var(--shadow-card)] dark:border-stone-700 dark:bg-[linear-gradient(145deg,#292524_0%,#1c1917_45%,#44403c_100%)] dark:text-stone-200"
               aria-hidden
             >
-              {file && validation?.ok ? previewLabel : "—"}
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.14] dark:opacity-[0.12]"
+                style={{
+                  backgroundImage: `repeating-linear-gradient(-12deg, transparent, transparent 5px, rgba(28,25,23,0.08) 5px, rgba(28,25,23,0.08) 6px)`,
+                }}
+              />
+              <span className="relative">{file && validation?.ok ? previewLabel : "—"}</span>
             </div>
-            <p className="mt-2 text-center text-[11px] font-medium uppercase tracking-wide text-stone-500">
-              Simulated preview
+            <p className="mt-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+              Mock media preview
+            </p>
+            <p className="mt-1 text-center text-[10px] leading-snug text-stone-400 dark:text-stone-500">
+              Placeholder · future managed asset
             </p>
           </div>
         </div>
@@ -226,37 +242,41 @@ export function SubmitMediaForm() {
         <input type="hidden" name="mockFilePreviewLabel" value={previewLabel} />
       </section>
 
-      <label className="flex cursor-pointer gap-3 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-800 shadow-sm dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
-        <input type="checkbox" name="permissionConfirm" className="mt-0.5 size-4 rounded border-stone-300" />
+      <label className="flex cursor-pointer gap-4 rounded-2xl border border-stone-200/90 bg-[var(--card)] p-5 text-sm leading-snug text-stone-800 shadow-[var(--shadow-card)] dark:border-stone-800 dark:text-stone-200">
+        <input
+          type="checkbox"
+          name="permissionConfirm"
+          className="mt-0.5 size-4 rounded border-stone-300 text-stone-900 focus:ring-stone-400 dark:border-stone-600"
+        />
         <span>
           I confirm I have permission to submit this media for Grey Collective Development review.
         </span>
       </label>
 
       {serverError ? (
-        <p className="rounded-xl border border-red-200/80 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100">
+        <p className="rounded-2xl border border-red-200/90 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
           {serverError}
         </p>
       ) : null}
 
       {done ? (
-        <p className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-50">
-          Submission recorded. Status starts as <span className="font-semibold">Submitted</span> — continue
-          in Admin.
+        <p className="rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/45 dark:bg-emerald-950/35 dark:text-emerald-50">
+          Submission recorded. Status starts as <span className="font-semibold">Submitted</span> — continue in
+          Admin.
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col gap-5 border-t border-stone-200/80 pt-8 dark:border-stone-800 sm:flex-row sm:flex-wrap sm:items-center">
         <button
           type="submit"
           disabled={pending || !file || !validation?.ok}
-          className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-stone-900 px-8 py-3 text-sm font-semibold text-white shadow-[var(--shadow-card)] transition-[background-color,transform,box-shadow] hover:bg-stone-800 hover:shadow-[var(--shadow-card-hover)] disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white"
         >
           {pending ? "Submitting…" : "Submit for Grey Collective review"}
         </button>
         <p className="max-w-md text-xs leading-relaxed text-stone-500 dark:text-stone-500">
-          Publishing is admin-only after checklist review and explicit publish — never automatic from
-          approval.
+          Publishing is admin-only after checklist review and an explicit publish action — never automatic from
+          approval alone.
         </p>
       </div>
     </form>
